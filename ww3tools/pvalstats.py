@@ -249,8 +249,8 @@ class ModelObsPlot:
         self.fctxt = fctxt
         self.fctunits = fctunits
         self.fctxticks = fctxticks
-        # name of the 8 error metrics
-        self.nerrm=np.array(['bias','RMSE','NBias','NRMSE','SCrmse','SI','HH','CC'])
+        # name of the 9 error metrics
+        self.nerrm=np.array(['bias','RMSE','NBias','NRMSE','SCrmse','SI','HH','CC','N'])
 
     def timeseries(self):
         '''

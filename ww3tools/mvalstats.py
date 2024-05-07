@@ -158,7 +158,7 @@ def metrics(model,obs,vmin=-np.inf,vmax=np.inf,maxdiff=np.inf, pctlerr='no'):
     ferr[5] = ( (((model-model.mean())-(obs-obs.mean()))**2).sum() / (obs**2).sum() )**0.5  # Scatter Index
     ferr[6] = ( ((model - obs)**2).sum() / (model * obs).sum() )**0.5  # HH
     ferr[7]=np.corrcoef(model,obs)[0,1]  #  Correlation Coefficient 
-    ferr[8]=len(obs)  #number of obs used in stat calculations 
+    ferr[8]=len(obs)  #number of match-ups between model/obs used in stat calculations 
 
     # Bias and RMSE for severe conditions above the 95 percentile.
     if pctlerr!='no':
