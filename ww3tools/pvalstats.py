@@ -119,10 +119,10 @@ from matplotlib.dates import DateFormatter
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature
 import os
-from mpl_toolkits.basemap import cm
-colormap = cm.GMT_polar
-palette = plt.cm.jet
-palette.set_bad('aqua', 10.0)
+#from mpl_toolkits.basemap import cm
+#colormap = cm.GMT_polar
+#palette = plt.cm.jet
+#palette.set_bad('aqua', 10.0)
 import warnings; warnings.filterwarnings("ignore")
 # Font size and style
 sl=13
@@ -430,7 +430,8 @@ class ModelObsPlot:
         plt.savefig(self.ftag+'QQplot.png', dpi=200, facecolor='w', edgecolor='w',orientation='portrait', format='png',transparent=False, bbox_inches='tight', pad_inches=0.1)
         plt.close(fig1); del fig1, ax
 
-    def scatterplot(self):
+
+    def scatterplot(self, dwscl='no'):
         '''
         Scatter plot.
         Inputs:
@@ -438,6 +439,10 @@ class ModelObsPlot:
            the model array can include one or more model results, through the number of columns, while
            the observation array must be one-dimensional, with the same number of lines as the model.
           Optional: see object construction above.
+          - mlabels: List containing labels for each model. Default is an empty list.
+          - ftag: Path to save the figure. Default is the current directory.
+          - dwscl: Whether to apply downsampling. Default is 'no'. If set to 'no', downsampling is not applied.
+                If set to any other value, downsampling is applied.
         Output: png figure saved in the local directory where python is running or in the path given through ftag.
         Example:
           from pvalstats import ModelObsPlot
@@ -446,26 +451,31 @@ class ModelObsPlot:
 
           mop=ModelObsPlot(model=np.c_[model1[:],model2[:]],obs=buoydata[:],axisnames=["WW3","Buoy"],
               mlabels=["WW3T1","WW3T2"],ftag="/home/ricardo/testWW3/NewRun_")
+          mop.scatterplot(dwscl='yes') yes=downsampling; no: No downsampling
           mop.scatterplot()
         '''
 
-        num_points_plotted = 0  # Initialize counter
+        if self.obs[0,:].shape[0] > 50000 and dwscl != 'no':
+            sk = int(np.round(float(self.obs[0,:].shape[0]) / 30000., 0))
+        else:
+            sk = 1
 
-        a = math.floor(np.nanmin(np.append(self.obs, self.model)) * 100.) / 100.
-        b = math.ceil(np.nanmax(np.append(self.obs, self.model)) * 100.) / 100.
+        a = math.floor(np.nanmin(np.append(self.obs[:,::sk], self.model[:,::sk])) * 100.) / 100.
+        b = math.ceil(np.nanmax(np.append(self.obs[:,::sk], self.model[:,::sk])) * 100.) / 100.
         famin = a - 0.1 * a
         famax = b + 0.1 * a
         aux = np.linspace(famin, famax, 100)
-        
+
         # plot
         fig1 = plt.figure(1, figsize=(5, 4.5))
         ax = fig1.add_subplot(111)
 
         for i in range(0, self.model.shape[0]):
-            b = np.array(self.obs)
-            a = np.array(self.model[i])
-
-            num_points_plotted += len(a)
+            b = np.array(self.obs[0,::sk])
+            a = np.array(self.model[i,::sk])
+            ind = np.where((a*b) > -999.)[0]
+            a = np.copy(a[ind])
+            b = np.copy(b[ind])
 
             if (a.shape[0] < 30) or (self.model.shape[0] > 1):
                 if np.size(self.mlabels) > 0:
@@ -475,7 +485,7 @@ class ModelObsPlot:
                         ax.scatter(b, a, color=self.color[i], marker=self.marker[i], zorder=2)
                 else:
                     ax.scatter(b, a, color=self.color[i], marker=self.marker[i], zorder=2)
-            elif (np.size(self.color) == 1) & (self.model.shape[0] == 1):
+            elif (np.size(self.color) == 1) and (self.model.shape[0] == 1):
                 ax.scatter(b, a, color=self.color[i], marker=self.marker[i], zorder=2)
             else:
                 xy = np.vstack([a, b])
@@ -494,11 +504,11 @@ class ModelObsPlot:
                 ax.plot(aux, aregr, color=self.color[i], ls='-', linewidth=1., alpha=0.8, zorder=4)
                 ax.plot(aux, aregr, color='k', ls=':', linewidth=0.7, alpha=0.7, zorder=4)
                 if np.size(self.mlabels) > 0:
-                    print(self.ftag + "ScatterPlot " + self.mlabels[i] + ": Slope " + np.str(
-                        np.round(float(r.slope), 5)) + ", Intercept " + np.str(np.round(float(r.intercept), 5)))
+                    print(self.ftag + "ScatterPlot " + self.mlabels[i] + ": Slope " + np.str(np.round(float(r.slope), 5))
+                          + ", Intercept " + np.str(np.round(float(r.intercept), 5)))
                 else:
-                    print(self.ftag + "ScatterPlot: Slope " + np.str(np.round(float(r.slope), 5)) + ", Intercept " + np.str(
-                        np.round(float(r.intercept), 5)))
+                    print(self.ftag + "ScatterPlot: Slope " + np.str(np.round(float(r.slope), 5)) + ", Intercept "
+                          + np.str(np.round(float(r.intercept), 5)))
                 del r, aregr
 
             del a, b
@@ -530,8 +540,6 @@ class ModelObsPlot:
                     format='png', transparent=False, bbox_inches='tight', pad_inches=0.1)
         plt.close(fig1)
         del fig1, ax
-
-        print("Number of data points plotted:", num_points_plotted)
 
     def taylordiagram(self):
         '''
