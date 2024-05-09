@@ -194,7 +194,7 @@ class ModelObsPlot:
             np.array(np.atleast_1d(['.','.','.','.','.','.','.','.','.','.','.','.','.','.','.',])).astype('str'))
 
         self.color = (color if color is not None else
-            np.array(['darkred', 'purple', 'darkgreen', 'darkorange', 'deeppink', 'blue', 'brown', 'salmon', 'lime', 'darkviolet', 'yellow',
+            np.array(['darkblue', 'darkred', 'darkgreen', 'darkorange', 'purple', 'deeppink', 'brown', 'salmon', 'lime', 'darkviolet', 'yellow',
                 'cornflowerblue', 'red', 'green', 'violet', 'orange']))
 
         if self.model.ndim > 2 or self.obs.ndim > 2:
