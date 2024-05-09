@@ -463,12 +463,7 @@ class ModelObsPlot:
         famax = b + 0.1 * a
         aux = np.linspace(famin, famax, 100)
 
-        a = math.floor(np.nanmin(np.append(self.obs, self.model)) * 100.) / 100.
-        b = math.ceil(np.nanmax(np.append(self.obs, self.model)) * 100.) / 100.
-        famin = a - 0.1 * a
-        famax = b + 0.1 * a
-        aux = np.linspace(famin, famax, 100)
-        
+
         # plot
         fig1 = plt.figure(1, figsize=(5, 4.5))
         ax = fig1.add_subplot(111)
