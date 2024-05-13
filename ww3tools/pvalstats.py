@@ -194,7 +194,7 @@ class ModelObsPlot:
             np.array(np.atleast_1d(['.','.','.','.','.','.','.','.','.','.','.','.','.','.','.',])).astype('str'))
 
         self.color = (color if color is not None else
-            np.array(['navy', 'firebrick', 'darkgreen', 'fuchsia', 'gold', 'blue', 'salmon', 'lime', 'darkviolet', 'yellow',
+            np.array(['darkblue', 'darkred', 'darkgreen', 'darkorange', 'purple', 'deeppink', 'brown', 'salmon', 'lime', 'darkviolet', 'yellow',
                 'cornflowerblue', 'red', 'green', 'violet', 'orange']))
 
         if self.model.ndim > 2 or self.obs.ndim > 2:
@@ -462,6 +462,7 @@ class ModelObsPlot:
         famin = a - 0.1 * a
         famax = b + 0.1 * a
         aux = np.linspace(famin, famax, 100)
+
 
         # plot
         fig1 = plt.figure(1, figsize=(5, 4.5))
