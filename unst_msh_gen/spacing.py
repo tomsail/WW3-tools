@@ -2,7 +2,7 @@
 """ Mesh spacing utilities, for barotropic flows
 """
 
-# Authors: Darren Engwirda, Ali Salimi
+# Authors: Darren Engwirda, Ali Salimi-Tarazouj
 
 # routines to compute mesh spacing functions that scale
 # with shallow-water wave lengths, elev. gradients, etc 

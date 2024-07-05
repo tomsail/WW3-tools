@@ -1,3 +1,13 @@
+"""
+To shift the mesh from -180:180 (lon) to 0:360
+
+input_file_path: -180:180 (lon) mesh in GMSH fomrat
+output_fil_pat: 0:360 (lon) mesh in GMSH format 
+"""
+
+# Author: Ali Salimi-Tarazouj
+
+
 input_file_path = './9km_nobc.ww3'
 output_file_path = './modified_9km_nobc.ww3'
 
