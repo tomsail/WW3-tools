@@ -8,6 +8,9 @@ Created on Fri Apr 19 15:17:57 2024
 This script originally was developed by Steven Brus (@sbrus89) and revised by Ali Salimi-Tarazouj to work efficiently for very high resolution meshes
 """
 
+import xarray as xr
+from xarray_selafin.xarray_backend import SelafinAccessor
+import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.tri as tri
@@ -175,7 +178,6 @@ def plot_eleminfo(plotdescriptor, xy, ect, distmin, distmax, depth, highlight_no
   #create one tringulation and use it for multiple plots: 
     triang=tri.Triangulation(xy[:,0],xy[:,1],triangles=ect, mask=mask)
     vpltmin=1
-    vpltmax= 30
         
 
     # Shared figure setup
@@ -194,7 +196,7 @@ def plot_eleminfo(plotdescriptor, xy, ect, distmin, distmax, depth, highlight_no
         if suffix == 'elm':
             cf = ax.triplot(triang, 'k-', linewidth=0.5)
         else:
-            cf = ax.tripcolor(triang, data, cmap=cmap, shading=shading if shading else 'flat', vmin=vpltmin, vmax=vpltmax if data is not depth else None)
+            cf = ax.tripcolor(triang, data, cmap=cmap, shading=shading if shading else 'flat', vmin=vpltmin)
             plt.colorbar(mappable=cf, label=label)
 
         if highlight_nodes is not None and suffix == 'elm':
@@ -203,11 +205,31 @@ def plot_eleminfo(plotdescriptor, xy, ect, distmin, distmax, depth, highlight_no
         plt.savefig(f'{suffix}_{plotdescriptor}.png')
         #plt.close()
 
-filename = "./uglo_poly_nBlkS.ww3"
+def convert_to_slf(filename):
+    fileout = f"{filename.split('.')[0]}.slf"
+    xy, depth, ect, bnd =  read_gmsh(filename)
+    # Creating a minimal dataset
+    ds = xr.Dataset(
+        {
+            "B": (("time", "node"), [ -depth ]),
+            # Add other variables as needed
+        },
+        coords={
+            "x": ("node", xy[:,0]),
+            "y": ("node", xy[:,1]),
+            "time":[pd.Timestamp.now()],
+            # Add "ikle2" or "ikle3" as required by your mesh
+        }
+    )
+    ds.attrs['ikle2'] = ect + 1
+    ds.selafin.write(fileout)
 
+
+filename = "tmp/uglo_poly_nBlkS_1km.ww3"
 descriptor = "uglo_poly_nBlkS"
 
 xy, depth, ect, bnd =  read_gmsh(filename)
+convert_to_slf(filename)
 
 distmin, distmax = calc_elm_size(xy, ect)
 highlighted_nodes = []  # Replace with your actual node indices , 12776, 13923

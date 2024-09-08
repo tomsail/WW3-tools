@@ -20,6 +20,8 @@ from scipy.sparse.csgraph import connected_components
 
 from spacing import *
 
+import matplotlib.pyplot as plt
+
 def parse_input_args():
     parser = argparse.ArgumentParser(description='Create a mask file with multiple methods.')
     parser.add_argument('--config', type=str, required=True, help='Path to the configuration file.')
@@ -40,8 +42,10 @@ def load_configuration(config_path):
         'hmax': float(config.get('Spacing', 'hmax', fallback='100.0')),
         'hshr': float(config.get('Spacing', 'hshr', fallback='100')),
         'nwav': int(config.get('Spacing', 'nwav', fallback='400')),
+        'nslp': int(config.get('Spacing', 'nslp', fallback='50')),
         'hmin': float(config.get('Spacing', 'hmin', fallback='100.0')),
         'dhdx': float(config.get('Spacing', 'dhdx', fallback='0.05')),
+        'dzdx': float(config.get('Spacing', 'dzdx', fallback='0.1')),
         'dem_file': config.get('DataFiles', 'dem_file', fallback='')
     }
     return configurations
@@ -99,8 +103,9 @@ def create_siz():
     #-- create mesh spacing function for the globe: for uniform mesh hmax = hshr = hmin
 
     hmax = configurations['hmax'] # maximum spacing [km] 
-    hshr = configurations['hshr']   # shoreline spacing
-    nwav = configurations['nwav']   # number of cells per sqrt(g*H)
+    hshr = configurations['hshr']  # shoreline spacing
+    nwav = configurations['nwav']  # number of cells per sqrt(g*H)
+    nslp = configurations['nslp']  # number of cells for bathy gradient
     hmin = configurations['hmin']  # minimum spacing
     dhdx = configurations['dhdx']  # allowable spacing gradient: for more gradual transition use lower value
     mask_file = configurations['mask_file'] #user defined scaling file
@@ -128,7 +133,12 @@ def create_siz():
         hmat = np.minimum(
             hmat, swe_wavelength_spacing(
                 elev, land, nwav, hmin, hmax))
-    
+
+    grad = elev_sharpness_spacing(
+        xlon, ylat, elev, land, nslp, hmin, hmax)
+    hmat = np.minimum(hmat, grad)
+
+
 #-- final h(x) data: impose global "shoreline" min. val.
    
     hmat[high] = hmax
@@ -163,19 +173,7 @@ def create_siz():
     spac.xgrid = xlon * np.pi / 180.
     spac.ygrid = ylat * np.pi / 180.
 
-    xmat, ymat = np.meshgrid(
-        spac.xgrid, spac.ygrid, sparse=True)
-
-#-- keep high-res. only in a guassian-ish "zoom" region
-
-    ymid = 41.5 * np.pi / 180.
-    xmid = 30.5 * np.pi / 180.
-
-    zoom = +100.0 - 99.0 * np.exp(-(
-        6.75 * (xmat - xmid) ** 2 +
-        12.5 * (ymat - ymid) ** 2) ** 2)
-    
-    spac.value = hmat*zoom 
+    spac.value = hmat
     spac.slope = np.array(dhdx)
     spac.value = np.minimum(hmax, spac.value)
     

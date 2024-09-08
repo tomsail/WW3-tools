@@ -158,24 +158,48 @@ def swe_wavelength_spacing(
 
 def elev_sharpness_spacing(
         xlon, ylat, 
-        elev, dzdx, land, nslp, hmin, hmax, sdev):
+        elev, land, nslp, hmin, hmax):
 
     print("Computing GRAD(elev) heuristic...")
+    meters_per_degree = 111132.92
+    dx = np.mean(np.diff(xlon)) * meters_per_degree
+    dy = np.mean(np.diff(ylat)) * meters_per_degree
 
-    dzdx = gaussian(np.asarray(
-        dzdx, dtype=np.float32), sigma=sdev, mode="wrap")
-   
-    dzdx = np.maximum(1.E-08, dzdx) # no divide-by-zero
+    by, bx = _earth_gradient(elev, dx, dy)
+    bs = np.sqrt(bx**2 + by**2)  # get overall slope
 
-    vals = np.maximum(10, -elev) / dzdx / nslp / 1000.
+    # Calculating the slope function
+    eps = 1e-10  # small number to approximate derivative
+    dp = np.clip(-elev, None, -50)
+    vals = (2 * np.pi / nslp) * np.abs(dp) / (bs + eps)
+    vals[vals > hmax] = hmax
+    vals[vals < hmin] = hmin
 
-    vals = np.maximum(vals, hmin)
-    vals = np.minimum(vals, hmax)
-
-    vals = np.asarray(vals, dtype=np.float32)
-    
     return vals
-   
+
+
+def _earth_gradient(F, dx, dy):
+    """
+    earth_gradient(F,HX,HY), where F is 2-D, uses the spacing
+    specified by HX and HY. HX and HY can either be scalars to specify
+    the spacing between coordinates or vectors to specify the
+    coordinates of the points.  If HX and HY are vectors, their length
+    must match the corresponding dimension of F.
+    """
+    Fy, Fx = np.zeros(F.shape), np.zeros(F.shape)
+
+    # Forward diferences on edges
+    Fx[:, 0] = (F[:, 1] - F[:, 0]) / dx
+    Fx[:, -1] = (F[:, -1] - F[:, -2]) / dx
+    Fy[0, :] = (F[1, :] - F[0, :]) / dy
+    Fy[-1, :] = (F[-1, :] - F[-2, :]) / dy
+
+    # Central Differences on interior
+    Fx[:, 1:-1] = (F[:, 2:] - F[:, :-2]) / (2 * dx)
+    Fy[1:-1, :] = (F[2:, :] - F[:-2, :]) / (2 * dy)
+
+    return Fy, Fx
+
 
 def scale_spacing_via_mask(args, vals):
     print("User-defined h(x) scaling...")
